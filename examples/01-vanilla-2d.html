@@ -381,7 +381,7 @@
         <button id="btn-bright" class="btn-layer" onclick="setBasemap('bright')">Bright</button>
       </div>
       <div class="btn-group-2">
-        <button id="btn-dark" class="btn-layer" onclick="setBasemap('dark')">Dark Matter</button>
+        <button id="btn-dark" class="btn-layer" onclick="setBasemap('dark')">Dark (OFM)</button>
         <button id="btn-satelit" class="btn-layer" onclick="setBasemap('satelit')">Satelit Esri</button>
       </div>
 
@@ -453,10 +453,10 @@
 
     // Inisialisasi Lapisan GeoJSON saat Style dimuat
     function applyGeoJsonLayers() {
-      if (!map.isStyleLoaded()) return;
+      if (!map.isStyleLoaded() || !desaGeoJson || !kecGeoJson) return;
 
       // 1. Sumber Data Desa Baku
-      if (desaGeoJson && !map.getSource("source-desa")) {
+      if (!map.getSource("source-desa")) {
         map.addSource("source-desa", {
           type: "geojson",
           data: desaGeoJson
@@ -490,7 +490,7 @@
       }
 
       // 2. Sumber Data Kecamatan Baku
-      if (kecGeoJson && !map.getSource("source-kec")) {
+      if (!map.getSource("source-kec")) {
         map.addSource("source-kec", {
           type: "geojson",
           data: kecGeoJson
@@ -508,46 +508,48 @@
         });
       }
 
-      // Event Interaksi Hover Desa
-      map.on("mousemove", "layer-desa-fill", (e) => {
-        if (!e.features.length) return;
-        map.getCanvas().style.cursor = "pointer";
-        const feat = e.features[0];
-        const props = feat.properties || {};
-
-        const namaDesa = props.Nama_Desa_ || props.Name || "Desa";
-        const kec = props.Kecamatan || "-";
-        const kab = props.Kabupaten || "Banjarnegara";
-        const objId = props.OBJECTID || "-";
-
-        popup.setLngLat(e.lngLat)
-          .setHTML(`
-            <div class="popup-title">${namaDesa}</div>
-            <div class="popup-meta">
-              Kecamatan: <strong>${kec}</strong><br>
-              Kabupaten: ${kab}
-            </div>
-            <span class="popup-badge">ID: ${objId}</span>
-          `)
-          .addTo(map);
-
-        document.getElementById("info-content").innerHTML = `
-          <strong>${namaDesa}</strong> (${kec})<br>
-          <span style="color:#94a3b8;font-size:11px;">Kabupaten ${kab} &bull; OBJECTID: ${objId}</span>
-        `;
-      });
-
-      map.on("mouseleave", "layer-desa-fill", () => {
-        map.getCanvas().style.cursor = "";
-        popup.remove();
-      });
-
       if (selectedKecamatan) {
         applyFilter(selectedKecamatan);
       }
     }
 
-    map.on("styledata", applyGeoJsonLayers);
+    // Pasang listener pada event load dan idle agar batas wilayah otomatis terpasang kembali saat ganti basemap
+    map.on("load", applyGeoJsonLayers);
+    map.on("idle", applyGeoJsonLayers);
+
+    // Event Interaksi Hover Desa (dipasang satu kali di map instance)
+    map.on("mousemove", "layer-desa-fill", (e) => {
+      if (!e.features.length) return;
+      map.getCanvas().style.cursor = "pointer";
+      const feat = e.features[0];
+      const props = feat.properties || {};
+
+      const namaDesa = props.Nama_Desa_ || props.Name || "Desa";
+      const kec = props.Kecamatan || "-";
+      const kab = props.Kabupaten || "Banjarnegara";
+      const objId = props.OBJECTID || "-";
+
+      popup.setLngLat(e.lngLat)
+        .setHTML(`
+          <div class="popup-title">${namaDesa}</div>
+          <div class="popup-meta">
+            Kecamatan: <strong>${kec}</strong><br>
+            Kabupaten: ${kab}
+          </div>
+          <span class="popup-badge">ID: ${objId}</span>
+        `)
+        .addTo(map);
+
+      document.getElementById("info-content").innerHTML = `
+        <strong>${namaDesa}</strong> (${kec})<br>
+        <span style="color:#94a3b8;font-size:11px;">Kabupaten ${kab} &bull; OBJECTID: ${objId}</span>
+      `;
+    });
+
+    map.on("mouseleave", "layer-desa-fill", () => {
+      map.getCanvas().style.cursor = "";
+      popup.remove();
+    });
 
     // Ambil Data GeoJSON Baku (prioritaskan data instan dari window.BANJARNEGARA_GEOJSON agar jalan di file://)
     const loadDataPromise = (window.BANJARNEGARA_GEOJSON && window.BANJARNEGARA_GEOJSON.kecamatan)
@@ -590,9 +592,8 @@
         selectEl.appendChild(opt);
       });
 
-      if (map.isStyleLoaded()) {
-        applyGeoJsonLayers();
-      }
+      // Terapkan layer spasial seketika
+      applyGeoJsonLayers();
     }).catch(err => console.error("Gagal memuat berkas GeoJSON baku:", err));
 
     // Ganti Basemap (Liberty, Positron, Bright, Dark, Satelit)

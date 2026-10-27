@@ -25,28 +25,7 @@ const STYLES: Record<MapStyleKey, string | maplibregl.StyleSpecification> = {
   liberty: "https://tiles.openfreemap.org/styles/liberty",
   positron: "https://tiles.openfreemap.org/styles/positron",
   bright: "https://tiles.openfreemap.org/styles/bright",
-  dark: {
-    version: 8,
-    sources: {
-      "carto-dark": {
-        type: "raster",
-        tiles: [
-          "https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png",
-          "https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png",
-          "https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png",
-        ],
-        tileSize: 256,
-        maxzoom: 19,
-      },
-    },
-    layers: [
-      {
-        id: "carto-dark-layer",
-        type: "raster",
-        source: "carto-dark",
-      },
-    ],
-  } as unknown as maplibregl.StyleSpecification,
+  dark: "https://tiles.openfreemap.org/styles/dark",
   satelit: {
     version: 8,
     sources: {
@@ -159,7 +138,8 @@ export default function Map2DComponent({
       }
     };
 
-    map.on("styledata", renderGeoJson);
+    map.on("load", renderGeoJson);
+    map.on("idle", renderGeoJson);
 
     return () => {
       map.remove();

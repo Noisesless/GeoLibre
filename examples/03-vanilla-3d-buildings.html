@@ -70,12 +70,15 @@
     <div class="control-panel">
       <div class="panel-title">Fokus Kawasan</div>
       <button class="btn btn-primary" onclick="focusCity()">Fokus Alun-Alun Banjarnegara</button>
-      <button class="btn" onclick="focusKecamatan()">Fokus Kantor Kecamatan Banjarmangu</button>
+      <button class="btn" onclick="focusKecamatan()">Fokus Kecamatan Banjarmangu</button>
+      <button class="btn" onclick="focusBanjarnegara()">Overview Kabupaten</button>
       <button class="btn" onclick="toggle3D()">Toggle Kemiringan Kamera</button>
+      <button class="btn" onclick="toggleBoundaries()">Toggle Batas Wilayah</button>
     </div>
   </div>
 
   <script src="../assets/maplibre-gl.js"></script>
+  <script src="../assets/geojson/banjarnegara-data.js"></script>
   <script>
     const map = new maplibregl.Map({
       container: "map",
@@ -90,7 +93,54 @@
     map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-left");
 
     map.on("load", () => {
-      // Dapatkan layer label pertama agar gedung 3D dirender di bawah label nama jalan
+      // 1. Tambahkan Batas Wilayah Kecamatan & Desa di dasar peta
+      const loadData = window.BANJARNEGARA_GEOJSON
+        ? Promise.resolve([window.BANJARNEGARA_GEOJSON.kecamatan, window.BANJARNEGARA_GEOJSON.desa])
+        : Promise.all([
+            fetch("../assets/geojson/banjarnegara-kecamatan.geojson").then(r => r.json()),
+            fetch("../assets/geojson/banjarnegara-desa.geojson").then(r => r.json())
+          ]);
+
+      loadData.then(([kecData, desaData]) => {
+        if (!map.getSource("source-desa") && desaData) {
+          map.addSource("source-desa", { type: "geojson", data: desaData });
+          map.addLayer({
+            id: "layer-desa-fill",
+            type: "fill",
+            source: "source-desa",
+            paint: {
+              "fill-color": "#0284c7",
+              "fill-opacity": 0.15
+            }
+          });
+          map.addLayer({
+            id: "layer-desa-line",
+            type: "line",
+            source: "source-desa",
+            paint: {
+              "line-color": "#ffffff",
+              "line-width": 0.8,
+              "line-opacity": 0.5
+            }
+          });
+        }
+
+        if (!map.getSource("source-kec") && kecData) {
+          map.addSource("source-kec", { type: "geojson", data: kecData });
+          map.addLayer({
+            id: "layer-kec-line",
+            type: "line",
+            source: "source-kec",
+            paint: {
+              "line-color": "#38bdf8",
+              "line-width": 2.2,
+              "line-dasharray": [3, 2]
+            }
+          });
+        }
+      });
+
+      // 2. Dapatkan layer label pertama agar gedung 3D dirender di bawah label nama jalan
       const layers = map.getStyle().layers;
       let labelLayerId;
       for (let i = 0; i < layers.length; i++) {
@@ -100,8 +150,7 @@
         }
       }
 
-      // Tambahkan Layer 3D Buildings (Fill Extrusion)
-      // OpenFreeMap menyertakan layer vektor 'building' di OpenMapTiles schema
+      // 3. Tambahkan Layer 3D Buildings (Fill Extrusion)
       if (map.getSource("openmaptiles")) {
         map.addLayer(
           {
@@ -170,6 +219,25 @@
         bearing: isPitched ? -15 : 0,
         duration: 1200
       });
+    }
+
+    function focusBanjarnegara() {
+      map.flyTo({
+        center: [109.639612, -7.355938],
+        zoom: 11.2,
+        pitch: 45,
+        bearing: 0,
+        duration: 2000
+      });
+    }
+
+    let showBoundaries = true;
+    function toggleBoundaries() {
+      showBoundaries = !showBoundaries;
+      const vis = showBoundaries ? "visible" : "none";
+      if (map.getLayer("layer-desa-fill")) map.setLayoutProperty("layer-desa-fill", "visibility", vis);
+      if (map.getLayer("layer-desa-line")) map.setLayoutProperty("layer-desa-line", "visibility", vis);
+      if (map.getLayer("layer-kec-line")) map.setLayoutProperty("layer-kec-line", "visibility", vis);
     }
   </script>
 </body>
