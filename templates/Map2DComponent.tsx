@@ -14,7 +14,9 @@ export type MapStyleKey = "liberty" | "positron" | "satelit";
 interface Map2DProps {
   initialCenter?: [number, number]; // [lng, lat]
   initialZoom?: number;
-  geojsonUrl?: string; // URL ke file geojson batas wilayah
+  desaGeojsonUrl?: string; // URL ke file geojson desa
+  kecamatanGeojsonUrl?: string; // URL ke file geojson kecamatan
+  geojsonUrl?: string; // URL legacy / fallback
   onFeatureClick?: (properties: Record<string, unknown>) => void;
   className?: string;
 }
@@ -45,11 +47,13 @@ const STYLES: Record<MapStyleKey, string | maplibregl.StyleSpecification> = {
 };
 
 export default function Map2DComponent({
-  initialCenter = [109.685, -7.339],
-  initialZoom = 12.5,
+  initialCenter = [109.639612, -7.355938],
+  initialZoom = 10.6,
+  desaGeojsonUrl = "/assets/banjarnegara_desa.geojson",
+  kecamatanGeojsonUrl = "/assets/banjarnegara_kecamatan.geojson",
   geojsonUrl,
   onFeatureClick,
-  className = "w-full h-[500px]",
+  className = "w-full h-[550px]",
 }: Map2DProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -72,44 +76,63 @@ export default function Map2DComponent({
     map.addControl(new maplibregl.NavigationControl(), "top-left");
 
     const renderGeoJson = async () => {
-      if (!geojsonUrl || map.getSource("custom-geojson-source")) return;
-      try {
-        const res = await fetch(geojsonUrl);
-        const data = await res.json();
-
-        map.addSource("custom-geojson-source", {
-          type: "geojson",
-          data,
-        });
-
-        map.addLayer({
-          id: "custom-geojson-fill",
-          type: "fill",
-          source: "custom-geojson-source",
-          paint: {
-            "fill-color": "#0284c7",
-            "fill-opacity": 0.45,
-          },
-        });
-
-        map.addLayer({
-          id: "custom-geojson-line",
-          type: "line",
-          source: "custom-geojson-source",
-          paint: {
-            "line-color": "#ffffff",
-            "line-width": 2,
-          },
-        });
-
-        if (onFeatureClick) {
-          map.on("click", "custom-geojson-fill", (e) => {
-            const feat = e.features?.[0];
-            if (feat?.properties) onFeatureClick(feat.properties);
+      // 1. Render Batas Kecamatan
+      if (kecamatanGeojsonUrl && !map.getSource("banjarnegara-kec-source")) {
+        try {
+          const resKec = await fetch(kecamatanGeojsonUrl);
+          const dataKec = await resKec.json();
+          map.addSource("banjarnegara-kec-source", { type: "geojson", data: dataKec });
+          map.addLayer({
+            id: "banjarnegara-kec-line",
+            type: "line",
+            source: "banjarnegara-kec-source",
+            paint: {
+              "line-color": "#0284c7",
+              "line-width": 2.2,
+              "line-dasharray": [3, 2],
+            },
           });
+        } catch (err) {
+          console.warn("Gagal memuat batas kecamatan:", err);
         }
-      } catch (err) {
-        console.error("Gagal memuat GeoJSON di Map2D:", err);
+      }
+
+      // 2. Render Poligon Desa
+      const targetDesaUrl = desaGeojsonUrl || geojsonUrl;
+      if (targetDesaUrl && !map.getSource("banjarnegara-desa-source")) {
+        try {
+          const resDesa = await fetch(targetDesaUrl);
+          const dataDesa = await resDesa.json();
+          map.addSource("banjarnegara-desa-source", { type: "geojson", data: dataDesa });
+          map.addLayer({
+            id: "banjarnegara-desa-fill",
+            type: "fill",
+            source: "banjarnegara-desa-source",
+            paint: {
+              "fill-color": "#0284c7",
+              "fill-opacity": 0.38,
+            },
+          });
+          map.addLayer({
+            id: "banjarnegara-desa-line",
+            type: "line",
+            source: "banjarnegara-desa-source",
+            paint: {
+              "line-color": "#ffffff",
+              "line-width": 0.8,
+              "line-opacity": 0.6,
+            },
+          });
+
+          if (onFeatureClick) {
+            map.on("click", "banjarnegara-desa-fill", (e) => {
+              const feat = e.features?.[0];
+              if (feat?.properties) onFeatureClick(feat.properties);
+            });
+          }
+        } catch (err) {
+          console.warn("Gagal memuat batas desa:", err);
+        }
       }
     };
 
@@ -119,7 +142,7 @@ export default function Map2DComponent({
       map.remove();
       mapRef.current = null;
     };
-  }, [initialCenter, initialZoom, geojsonUrl, onFeatureClick]);
+  }, [initialCenter, initialZoom, desaGeojsonUrl, kecamatanGeojsonUrl, geojsonUrl, onFeatureClick]);
 
   const switchStyle = (key: MapStyleKey) => {
     setActiveStyle(key);

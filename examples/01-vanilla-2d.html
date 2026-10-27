@@ -3,134 +3,373 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MapLibre GL 2D — Template Acuan Proyek</title>
+  <title>Peta 2D Banjarnegara — MapLibre GL JS (Liberty, Positron & Satelit)</title>
+  
+  <!-- Font Google: Outfit (Heading) & Inter (Body) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  
   <!-- MapLibre GL CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@6.16.0/dist/maplibre-gl.css">
+  <link rel="stylesheet" href="../assets/maplibre-gl.css">
+  
   <style>
+    :root {
+      --vibe-bg: #090d16;
+      --vibe-surface: rgba(15, 23, 42, 0.92);
+      --vibe-border: rgba(56, 189, 248, 0.22);
+      --vibe-border-hover: rgba(56, 189, 248, 0.45);
+      --vibe-text-main: #f8fafc;
+      --vibe-text-sub: #94a3b8;
+      --vibe-accent: #0284c7;
+      --vibe-accent-hover: #0369a1;
+      --vibe-font-head: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+      --vibe-font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --radius-md: 10px;
+      --radius-sm: 6px;
+    }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: system-ui, -apple-system, sans-serif; background: #0f172a; color: #f8fafc; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
-    
+    body {
+      font-family: var(--vibe-font-body);
+      background: var(--vibe-bg);
+      color: var(--vibe-text-main);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Navigation Header */
     header {
-      background: #1e293b;
-      padding: 12px 20px;
+      background: #0f172a;
+      padding: 12px 24px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid #334155;
-      z-index: 10;
+      border-bottom: 1px solid #1e293b;
+      z-index: 20;
     }
-    header h1 { font-size: 16px; font-weight: 700; color: #38bdf8; }
-    header p { font-size: 12px; color: #94a3b8; }
+    .brand-title {
+      font-family: var(--vibe-font-head);
+      font-size: 16px;
+      font-weight: 700;
+      color: #38bdf8;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .brand-subtitle {
+      font-size: 12px;
+      color: var(--vibe-text-sub);
+      margin-top: 2px;
+    }
+    .badge-scope {
+      background: rgba(2, 132, 199, 0.2);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      color: #38bdf8;
+      font-size: 10.5px;
+      padding: 3px 8px;
+      border-radius: var(--radius-sm);
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
 
-    #map-wrapper { position: relative; flex: 1; width: 100%; height: 100%; }
-    #map { width: 100%; height: 100%; }
+    /* Map Viewport Area */
+    #map-wrapper {
+      position: relative;
+      flex: 1;
+      width: 100%;
+      height: 100%;
+    }
+    #map {
+      width: 100%;
+      height: 100%;
+    }
 
+    /* Floating Control Panel (Top-Right) */
     .control-panel {
       position: absolute;
-      top: 15px;
-      right: 15px;
-      background: rgba(15, 23, 42, 0.9);
-      backdrop-filter: blur(8px);
-      border: 1px solid rgba(56, 189, 248, 0.3);
-      padding: 10px 14px;
-      border-radius: 8px;
-      z-index: 20;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      top: 16px;
+      right: 16px;
+      background: var(--vibe-surface);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid var(--vibe-border);
+      padding: 16px;
+      border-radius: var(--radius-md);
+      z-index: 15;
+      width: 320px;
+      max-width: calc(100vw - 32px);
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
     }
-    .btn-group { display: flex; gap: 6px; }
-    .btn-group button {
-      background: #334155;
+    .panel-section-title {
+      font-family: var(--vibe-font-head);
+      font-size: 11px;
+      font-weight: 700;
+      color: #7dd3fc;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 8px;
+    }
+
+    /* Layer Switcher Button Group */
+    .btn-group {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+    .btn-layer {
+      background: #1e293b;
       color: #cbd5e1;
-      border: none;
-      padding: 6px 12px;
-      border-radius: 6px;
+      border: 1px solid #334155;
+      padding: 8px 6px;
+      border-radius: var(--radius-sm);
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease-in-out;
+      text-align: center;
+    }
+    .btn-layer:hover {
+      background: #334155;
+      color: #ffffff;
+      border-color: var(--vibe-border-hover);
+    }
+    .btn-layer.active {
+      background: var(--vibe-accent);
+      color: #ffffff;
+      border-color: #38bdf8;
+      box-shadow: 0 0 12px rgba(2, 132, 199, 0.4);
+    }
+
+    /* Filter & Controls */
+    .filter-group {
+      margin-bottom: 12px;
+    }
+    .select-input {
+      width: 100%;
+      background: #1e293b;
+      color: #f1f5f9;
+      border: 1px solid #334155;
+      padding: 8px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-family: var(--vibe-font-body);
+      outline: none;
+      cursor: pointer;
+    }
+    .select-input:focus {
+      border-color: #38bdf8;
+    }
+
+    /* Layer Visibility Checkboxes */
+    .toggle-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 12px;
+      color: #cbd5e1;
+    }
+    .toggle-row input[type="checkbox"] {
+      accent-color: var(--vibe-accent);
+      cursor: pointer;
+      width: 16px;
+      height: 16px;
+    }
+
+    .btn-action {
+      width: 100%;
+      background: #1e293b;
+      color: #e2e8f0;
+      border: 1px solid #334155;
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
       font-size: 12px;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.2s;
+      margin-top: 6px;
     }
-    .btn-group button.active {
-      background: #0284c7;
-      color: #fff;
-    }
-    .btn-group button:hover:not(.active) {
-      background: #475569;
-      color: #fff;
+    .btn-action:hover {
+      background: #334155;
+      color: #ffffff;
     }
 
-    /* Popup Styling */
+    /* Bottom Info Card */
+    .info-card {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      background: var(--vibe-surface);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--vibe-border);
+      padding: 12px 18px;
+      border-radius: var(--radius-md);
+      z-index: 15;
+      max-width: 380px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+    .info-card-title {
+      font-family: var(--vibe-font-head);
+      font-size: 13px;
+      font-weight: 700;
+      color: #38bdf8;
+      margin-bottom: 4px;
+    }
+    .info-card-text {
+      font-size: 12px;
+      color: #cbd5e1;
+      line-height: 1.45;
+    }
+
+    /* MapLibre Popup Customization */
     .maplibregl-popup-content {
-      background: #ffffff !important;
-      color: #0f172a !important;
-      border-radius: 8px !important;
-      padding: 10px 14px !important;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.2) !important;
-      border: 1px solid #e2e8f0 !important;
+      background: #0f172a !important;
+      color: #f8fafc !important;
+      border-radius: var(--radius-md) !important;
+      padding: 12px 16px !important;
+      border: 1px solid rgba(56, 189, 248, 0.3) !important;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5) !important;
     }
     .maplibregl-popup-tip {
-      border-top-color: #ffffff !important;
+      border-top-color: #0f172a !important;
+    }
+    .popup-title {
+      font-family: var(--vibe-font-head);
+      font-size: 14px;
+      font-weight: 700;
+      color: #38bdf8;
+      margin-bottom: 4px;
+    }
+    .popup-meta {
+      font-size: 12px;
+      color: #94a3b8;
+      line-height: 1.4;
+    }
+    .popup-badge {
+      display: inline-block;
+      margin-top: 6px;
+      background: rgba(2, 132, 199, 0.25);
+      color: #7dd3fc;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 10.5px;
+      font-weight: 600;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 640px) {
+      header { padding: 10px 14px; flex-direction: column; align-items: flex-start; gap: 4px; }
+      .control-panel { top: 10px; right: 10px; width: calc(100vw - 20px); padding: 12px; }
+      .info-card { display: none; }
     }
   </style>
 </head>
 <body>
   <header>
     <div>
-      <h1>Template Acuan Peta 2D — MapLibre GL JS</h1>
-      <p>Render GeoJSON Batas Wilayah & Switcher Multi-Layer (Liberty, Positron, Esri Satellite)</p>
+      <div class="brand-title">
+        Peta 2D Kabupaten Banjarnegara
+      </div>
+      <div class="brand-subtitle">Visualisasi Layer Batas Wilayah: 20 Kecamatan & 278 Desa</div>
     </div>
+    <span class="badge-scope">GeoLibre Starter Kit</span>
   </header>
 
   <div id="map-wrapper">
     <div id="map"></div>
+
+    <!-- Floating Control Panel -->
     <div class="control-panel">
+      <div class="panel-section-title">Gaya Peta Dasar (Basemap)</div>
       <div class="btn-group">
-        <button id="btn-liberty" class="active" onclick="switchLayer('liberty')">Liberty</button>
-        <button id="btn-positron" onclick="switchLayer('positron')">Positron</button>
-        <button id="btn-satelit" onclick="switchLayer('satelit')">Satelit (Esri)</button>
+        <button id="btn-liberty" class="btn-layer active" onclick="setBasemap('liberty')">Liberty</button>
+        <button id="btn-positron" class="btn-layer" onclick="setBasemap('positron')">Positron</button>
+        <button id="btn-satelit" class="btn-layer" onclick="setBasemap('satelit')">Satelit</button>
+      </div>
+
+      <div class="panel-section-title">Filter Kecamatan</div>
+      <div class="filter-group">
+        <select id="select-kecamatan" class="select-input" onchange="onKecamatanFilter(this.value)">
+          <option value="">Semua Kecamatan (20 Wilayah)</option>
+        </select>
+      </div>
+
+      <div class="panel-section-title">Visibilitas Layer</div>
+      <div class="toggle-row">
+        <label for="toggle-kecamatan">Batas Garis Kecamatan</label>
+        <input type="checkbox" id="toggle-kecamatan" checked onchange="toggleLayerVisibility('layer-kec-line', this.checked)">
+      </div>
+      <div class="toggle-row">
+        <label for="toggle-desa">Poligon Wilayah Desa</label>
+        <input type="checkbox" id="toggle-desa" checked onchange="toggleLayerVisibility('layer-desa-fill', this.checked)">
+      </div>
+
+      <button id="btn-reset-view" class="btn-action" onclick="resetBanjarnegaraBounds()">Reset Tampilan Banjarnegara</button>
+    </div>
+
+    <!-- Info Card -->
+    <div id="info-card" class="info-card">
+      <div class="info-card-title">Informasi Wilayah</div>
+      <div id="info-content" class="info-card-text">
+        Arahkan kursor atau klik pada salah satu desa/kecamatan untuk melihat ringkasan identitas spasial.
       </div>
     </div>
   </div>
 
   <!-- MapLibre GL JS Script -->
+  <script src="../assets/maplibre-gl.mjs" type="module"></script>
   <script src="https://unpkg.com/maplibre-gl@6.16.0/dist/maplibre-gl.js"></script>
+  <!-- Konfigurasi Peta Banjarnegara -->
+  <script src="../assets/map-config.js"></script>
+
   <script>
-    // 1. Konfigurasi Web Worker
-    // Jika offline / self-hosted: maplibregl.setWorkerUrl('../assets/maplibre-gl-worker.mjs');
-    
-    const STYLES = {
-      liberty: "https://tiles.openfreemap.org/styles/liberty",
-      positron: "https://tiles.openfreemap.org/styles/positron",
-      satelit: {
-        version: 8,
-        sources: {
-          "esri-satellite": {
-            type: "raster",
-            tiles: ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],
-            tileSize: 256,
-            maxzoom: 19
-          }
-        },
-        layers: [
-          { id: "esri-satellite-layer", type: "raster", source: "esri-satellite" }
-        ]
-      }
+    // Konfigurasi Web Worker Lokal
+    if (typeof maplibregl !== "undefined") {
+      maplibregl.setWorkerUrl("../assets/maplibre-gl-worker.mjs");
+    }
+
+    const CONFIG = window.BANJARNEGARA_MAP || {
+      center: [109.639612, -7.355938],
+      zoom: 10.6,
+      bounds: [[109.361515, -7.540894], [109.917709, -7.170981]],
+      styles: {
+        liberty: "https://tiles.openfreemap.org/styles/liberty",
+        positron: "https://tiles.openfreemap.org/styles/positron",
+        satelit: {
+          version: 8,
+          sources: {
+            "esri-satellite": {
+              type: "raster",
+              tiles: ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],
+              tileSize: 256,
+              maxzoom: 19
+            }
+          },
+          layers: [{ id: "esri-satellite-layer", type: "raster", source: "esri-satellite" }]
+        }
+      },
+      colors: [
+        "#0284c7", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6",
+        "#ec4899", "#14b8a6", "#f97316", "#6366f1", "#84cc16"
+      ]
     };
 
-    const DESA_COLORS = [
-      "#2563eb", "#dc2626", "#16a34a", "#ca8a04", "#9333ea",
-      "#0891b2", "#db2777", "#65a30d", "#ea580c", "#4f46e5",
-      "#0d9488", "#b91c1c", "#15803d", "#a16207", "#7c3aed"
-    ];
+    let activeStyleKey = "liberty";
+    let kecGeoJson = null;
+    let desaGeoJson = null;
+    let selectedKecamatan = "";
 
-    let currentStyle = "liberty";
-    let geojsonData = null;
-
-    // Inisialisasi Peta
+    // Inisialisasi Instance Peta
     const map = new maplibregl.Map({
       container: "map",
-      style: STYLES.liberty,
-      center: [109.685, -7.339],
-      zoom: 12.5,
+      style: CONFIG.styles.liberty,
+      center: CONFIG.center,
+      zoom: CONFIG.zoom,
       attributionControl: false
     });
 
@@ -138,82 +377,236 @@
 
     const popup = new maplibregl.Popup({
       closeButton: false,
-      closeOnClick: false
+      closeOnClick: false,
+      offset: 12
     });
 
-    // Fungsi Render GeoJSON Layer
-    function addGeoJsonLayers() {
-      if (!geojsonData || map.getSource("desa-source")) return;
+    // Inisialisasi Lapisan GeoJSON saat Style dimuat
+    function applyGeoJsonLayers() {
+      if (!map.isStyleLoaded()) return;
 
-      try {
-        // Layer Kecamatan
-        if (!map.getSource("kecamatan-source")) {
-          map.addSource("kecamatan-source", { type: "geojson", data: geojsonData.kecamatan });
-          map.addLayer({
-            id: "kecamatan-line",
-            type: "line",
-            source: "kecamatan-source",
-            paint: { "line-color": "#1e3a8a", "line-width": 2.5, "line-dasharray": [3, 2] }
-          });
-        }
+      // 1. Sumber Data Desa
+      if (desaGeoJson && !map.getSource("source-desa")) {
+        map.addSource("source-desa", {
+          type: "geojson",
+          data: desaGeoJson
+        });
 
-        // Layer Desa
-        map.addSource("desa-source", { type: "geojson", data: geojsonData.desa });
         map.addLayer({
-          id: "desa-fill",
+          id: "layer-desa-fill",
           type: "fill",
-          source: "desa-source",
-          paint: { "fill-color": ["get", "color"], "fill-opacity": 0.55 }
+          source: "source-desa",
+          paint: {
+            "fill-color": ["get", "_color"],
+            "fill-opacity": [
+              "case",
+              ["boolean", ["feature-state", "hover"], false],
+              0.8,
+              0.42
+            ]
+          }
         });
+
         map.addLayer({
-          id: "desa-line",
+          id: "layer-desa-line",
           type: "line",
-          source: "desa-source",
-          paint: { "line-color": "#ffffff", "line-width": 1.5 }
+          source: "source-desa",
+          paint: {
+            "line-color": "#ffffff",
+            "line-width": 0.8,
+            "line-opacity": 0.55
+          }
+        });
+      }
+
+      // 2. Sumber Data Kecamatan
+      if (kecGeoJson && !map.getSource("source-kec")) {
+        map.addSource("source-kec", {
+          type: "geojson",
+          data: kecGeoJson
         });
 
-        // Hover popup
-        map.on("mousemove", "desa-fill", (e) => {
-          map.getCanvas().style.cursor = "pointer";
-          const feat = e.features?.[0];
-          if (!feat) return;
-          const nama = feat.properties?.Nama_Desa_ || feat.properties?.name || "Wilayah Desa";
-          popup.setLngLat(e.lngLat)
-            .setHTML(`<strong>${nama}</strong><br><span style="font-size:11px;color:#64748b;">Kecamatan Banjarmangu</span>`)
-            .addTo(map);
+        map.addLayer({
+          id: "layer-kec-line",
+          type: "line",
+          source: "source-kec",
+          paint: {
+            "line-color": "#0284c7",
+            "line-width": 2.4,
+            "line-dasharray": [3, 2]
+          }
         });
+      }
 
-        map.on("mouseleave", "desa-fill", () => {
-          map.getCanvas().style.cursor = "";
-          popup.remove();
-        });
+      // Event Interaksi Hover Desa
+      let hoveredStateId = null;
 
-      } catch (err) {
-        console.warn("Retrying GeoJSON render...", err);
+      map.on("mousemove", "layer-desa-fill", (e) => {
+        if (!e.features.length) return;
+        map.getCanvas().style.cursor = "pointer";
+        const feat = e.features[0];
+        const props = feat.properties || {};
+
+        const namaDesa = props.Nama_Desa_ || props.Name || "Desa";
+        const kec = props.Kecamatan || "-";
+        const kab = props.Kabupaten || "Banjarnegara";
+        const objId = props.OBJECTID || "-";
+
+        popup.setLngLat(e.lngLat)
+          .setHTML(`
+            <div class="popup-title">${namaDesa}</div>
+            <div class="popup-meta">
+              Kecamatan: <strong>${kec}</strong><br>
+              Kabupaten: ${kab}
+            </div>
+            <span class="popup-badge">ID: ${objId}</span>
+          `)
+          .addTo(map);
+
+        document.getElementById("info-content").innerHTML = `
+          <strong>${namaDesa}</strong> (${kec})<br>
+          <span style="color:#94a3b8;font-size:11px;">Kabupaten ${kab} &bull; OBJECTID: ${objId}</span>
+        `;
+      });
+
+      map.on("mouseleave", "layer-desa-fill", () => {
+        map.getCanvas().style.cursor = "";
+        popup.remove();
+      });
+
+      // Filter ulang jika ada filter aktif saat ganti style
+      if (selectedKecamatan) {
+        applyFilter(selectedKecamatan);
       }
     }
 
-    map.on("styledata", addGeoJsonLayers);
+    map.on("styledata", applyGeoJsonLayers);
 
     // Ambil Data GeoJSON Lokal
     Promise.all([
-      fetch("../assets/peta_kecamatan.geojson").then(r => r.json()),
-      fetch("../assets/peta_desa.geojson").then(r => r.json())
-    ]).then(([kec, desa]) => {
-      desa.features.forEach((f, i) => {
-        f.properties = f.properties || {};
-        f.properties.color = DESA_COLORS[i % DESA_COLORS.length];
-      });
-      geojsonData = { kecamatan: kec, desa };
-      if (map.isStyleLoaded()) addGeoJsonLayers();
-    }).catch(err => console.error("Error loading GeoJSON:", err));
+      fetch("../assets/banjarnegara_kecamatan.geojson")
+        .then(r => r.json())
+        .catch(() => fetch("../assets/peta_kecamatan.geojson").then(r => r.json())),
+      fetch("../assets/banjarnegara_desa.geojson")
+        .then(r => r.json())
+        .catch(() => fetch("../assets/peta_desa.geojson").then(r => r.json()))
+    ]).then(([kecData, desaData]) => {
+      kecGeoJson = kecData;
 
-    // Switcher Layer
-    function switchLayer(styleKey) {
+      // Berikan warna variatif pada tiap desa berdasarkan kecamatannya
+      const kecMap = {};
+      let colorIndex = 0;
+
+      desaData.features.forEach((f, idx) => {
+        f.id = idx + 1;
+        const props = f.properties || {};
+        const kecName = (props.Kecamatan || "").toLowerCase();
+        if (kecMap[kecName] === undefined) {
+          kecMap[kecName] = CONFIG.colors[colorIndex % CONFIG.colors.length];
+          colorIndex++;
+        }
+        props._color = kecMap[kecName];
+      });
+
+      desaGeoJson = desaData;
+
+      // Populate Dropdown Kecamatan
+      const selectEl = document.getElementById("select-kecamatan");
+      const listKec = [];
+      kecData.features.forEach(f => {
+        const name = f.properties.Kecamatan || f.properties.Name;
+        if (name && !listKec.includes(name)) listKec.push(name);
+      });
+      listKec.sort().forEach(k => {
+        const opt = document.createElement("option");
+        opt.value = k;
+        opt.textContent = "Kecamatan " + k.charAt(0).toUpperCase() + k.slice(1);
+        selectEl.appendChild(opt);
+      });
+
+      if (map.isStyleLoaded()) {
+        applyGeoJsonLayers();
+      }
+    }).catch(err => console.error("Gagal memuat berkas GeoJSON:", err));
+
+    // Fungsi Ganti Basemap (Liberty, Positron, Satelit)
+    function setBasemap(styleKey) {
+      if (activeStyleKey === styleKey) return;
       document.querySelectorAll(".btn-group button").forEach(b => b.classList.remove("active"));
       document.getElementById("btn-" + styleKey).classList.add("active");
-      currentStyle = styleKey;
-      map.setStyle(STYLES[styleKey]);
+      activeStyleKey = styleKey;
+      map.setStyle(CONFIG.styles[styleKey]);
+    }
+
+    // Filter Interaktif per-Kecamatan
+    function onKecamatanFilter(kecValue) {
+      selectedKecamatan = kecValue;
+      applyFilter(kecValue);
+
+      if (!kecValue) {
+        resetBanjarnegaraBounds();
+        return;
+      }
+
+      // Cari bounding box kecamatan terpilih
+      if (kecGeoJson && kecGeoJson.features) {
+        const feat = kecGeoJson.features.find(f => {
+          const val = (f.properties.Kecamatan || f.properties.Name || "").toLowerCase();
+          return val === kecValue.toLowerCase();
+        });
+
+        if (feat && feat.geometry) {
+          let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+          function scan(c) {
+            if (typeof c[0] === "number") {
+              if (c[0] < minX) minX = c[0];
+              if (c[0] > maxX) maxX = c[0];
+              if (c[1] < minY) minY = c[1];
+              if (c[1] > maxY) maxY = c[1];
+            } else {
+              c.forEach(scan);
+            }
+          }
+          scan(feat.geometry.coordinates);
+          if (minX !== Infinity) {
+            map.fitBounds([[minX, minY], [maxX, maxY]], { padding: 40, duration: 900 });
+          }
+        }
+      }
+    }
+
+    function applyFilter(kecValue) {
+      if (!map.getLayer("layer-desa-fill")) return;
+      if (!kecValue) {
+        map.setFilter("layer-desa-fill", null);
+        map.setFilter("layer-desa-line", null);
+      } else {
+        // Normalisasi format nama kecamatan (misal 'Kec.Susukan' atau 'susukan')
+        const filterExpr = [
+          "any",
+          ["==", ["downcase", ["get", "Kecamatan"]], kecValue.toLowerCase()],
+          ["==", ["downcase", ["get", "Kecamatan"]], ("kec." + kecValue).toLowerCase()],
+          ["==", ["downcase", ["get", "Kecamatan"]], ("kecamatan " + kecValue).toLowerCase()],
+          ["==", ["downcase", ["get", "Name"]], kecValue.toLowerCase()]
+        ];
+        map.setFilter("layer-desa-fill", filterExpr);
+        map.setFilter("layer-desa-line", filterExpr);
+      }
+    }
+
+    // Toggle Visibilitas Layer
+    function toggleLayerVisibility(layerId, isVisible) {
+      if (map.getLayer(layerId)) {
+        map.setLayoutProperty(layerId, "visibility", isVisible ? "visible" : "none");
+      }
+    }
+
+    // Reset View Bounds ke Seluruh Banjarnegara
+    function resetBanjarnegaraBounds() {
+      map.fitBounds(CONFIG.bounds, { padding: 25, duration: 800 });
+      document.getElementById("select-kecamatan").value = "";
+      selectedKecamatan = "";
+      applyFilter("");
     }
   </script>
 </body>

@@ -20,8 +20,8 @@ interface Map3DProps {
 }
 
 export default function Map3DComponent({
-  initialCenter = [109.685, -7.339],
-  initialZoom = 13.0,
+  initialCenter = [109.639612, -7.355938],
+  initialZoom = 12.0,
   initialPitch = 65,
   initialBearing = -20,
   exaggeration = 1.8,

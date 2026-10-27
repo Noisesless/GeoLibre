@@ -32,24 +32,28 @@ Proyek hulu [opengeos/GeoLibre](https://github.com/opengeos/GeoLibre) adalah pla
 ```text
 GeoLibre/ (maplibre-starter-kit)
 │
-├── assets/                     # 📦 Bundel aset biner lokal & data spasial siap pakai
-│   ├── maplibre-gl.mjs         # ES Module library utama MapLibre GL JS (v6.16+)
-│   ├── maplibre-gl-worker.mjs  # Dedicated Web Worker (Wajib untuk decode Vector Tile & GeoJSON)
-│   ├── maplibre-gl.css         # Stylesheet UI & kontrol peta
-│   ├── peta_desa.geojson       # Sampel dataset batas 17 Desa Banjarmangu (WGS84)
-│   └── peta_kecamatan.geojson  # Sampel batas garis luar teritori kecamatan
+├── assets/                          # 📦 Bundel aset biner lokal & data spasial siap pakai
+│   ├── maplibre-gl.mjs              # ES Module library utama MapLibre GL JS (v6.16+)
+│   ├── maplibre-gl-worker.mjs       # Dedicated Web Worker (Wajib untuk decode Vector Tile & GeoJSON)
+│   ├── maplibre-gl.css              # Stylesheet UI & kontrol peta
+│   ├── map-config.js                # Modul konfigurasi standar peta 2D & bounding box Banjarnegara
+│   ├── banjarnegara_kecamatan.geojson # Data spasial 20 Kecamatan lengkap Kabupaten Banjarnegara (817 KB)
+│   ├── banjarnegara_desa.geojson    # Data spasial 278 Desa/Kelurahan lengkap Banjarnegara (2.63 MB)
+│   ├── peta_kecamatan.geojson       # Alias compatibilitas batas kecamatan
+│   └── peta_desa.geojson            # Alias compatibilitas batas desa
 │
-├── examples/                   # 🚀 Demo HTML Standalone (Bisa langsung dibuka di browser)
-│   ├── 01-vanilla-2d.html      # Peta 2D dengan multi-layer switcher & GeoJSON popup interaktif
-│   ├── 02-vanilla-3d-terrain.html # Peta 3D dengan elevasi gunung nyata (DEM) & rotasi kamera
+├── examples/                        # 🚀 Demo HTML Standalone (Bisa langsung dibuka di browser)
+│   ├── 01-vanilla-2d.html           # Peta 2D Banjarnegara lengkap (Liberty, Positron, Satelit, filter kecamatan)
+│   ├── 02-vanilla-3d-terrain.html   # Peta 3D dengan elevasi gunung nyata (DEM) & rotasi kamera
 │   └── 03-vanilla-3d-buildings.html # Peta 3D perkotaan dengan ekstrusi bangunan (fill-extrusion)
 │
-├── templates/                  # ⚛️ Komponen siap pakai untuk React / Next.js
-│   ├── Map2DComponent.tsx      # Komponen React 2D interaktif dengan layer switcher & GeoJSON
-│   └── Map3DComponent.tsx      # Komponen React 3D dengan toggle terrain, rotasi, & atmosfer langit
+├── templates/                       # ⚛️ Komponen siap pakai untuk React / Next.js
+│   ├── Map2DComponent.tsx           # Komponen React 2D interaktif (Liberty, Positron, Satelit, Dual GeoJSON)
+│   └── Map3DComponent.tsx           # Komponen React 3D dengan toggle terrain, rotasi, & atmosfer langit
 │
-├── .gitignore                  # Konfigurasi pengabaian file Git
-└── README.md                   # Dokumentasi teknis utama
+├── .gitignore                       # Konfigurasi pengabaian file Git
+├── app-context.md                   # Snapshot state arsitektur & konteks proyek
+└── README.md                        # Dokumentasi teknis utama
 ```
 
 ---
@@ -69,13 +73,40 @@ Seluruh contoh pada direktori `examples/` dirancang agar dapat diuji tanpa konfi
    # Opsi 3: VS Code Live Server
    # Buka direktori di VS Code -> Klik kanan pada file HTML -> "Open with Live Server"
    ```
-2. **Buka file demo yang diinginkan:**
    - **Peta 2D Interaktif:** [examples/01-vanilla-2d.html](examples/01-vanilla-2d.html)
-     *Fitur:* Switcher gaya peta (OpenFreeMap Liberty, Positron, Esri Satellite), toggle batas wilayah GeoJSON desa, dan kartu detail pop-up interaktif saat desa diklik.
+     *Fitur:* Switcher gaya peta (Liberty, Positron, Esri Satelit), filter dropdown 20 kecamatan dengan auto `fitBounds`, toggle layer batas kecamatan dan desa, serta pop-up hover & info-card interaktif.
    - **Peta 3D Topografi Gunung (DEM):** [examples/02-vanilla-3d-terrain.html](examples/02-vanilla-3d-terrain.html)
      *Fitur:* Elevasi topografi 3D nyata bersumber dari data raster DEM Terrarium, pengatur kemiringan (*pitch* 0°–85°), rotasi (*bearing*), pengali tinggi lembah/gunung (*exaggeration slider*), efek kabut atmosfer cakrawala (*sky/fog*), serta auto-rotation kamera orbit.
    - **Peta 3D Ekstrusi Gedung Perkotaan:** [examples/03-vanilla-3d-buildings.html](examples/03-vanilla-3d-buildings.html)
      *Fitur:* Visualisasi gedung bertingkat 3D secara otomatis memanfaatkan layer data OpenMapTiles/OpenFreeMap dengan filter `["==", "extrude", "true"]` dan interpolasi ketinggian `render_height`.
+
+---
+
+## 📊 Analisa & Spesifikasi Data Spasial Kabupaten Banjarnegara
+
+Aset GeoJSON batas wilayah diintegrasikan dari proyek `pertanian_main` (`D:\Project\pertanian_main\dist\`), yang telah melalui proses optimasi presisi koordinat 6 desimal (~11 cm akurasi standar) dan penghapusan dimensi elevasi Z berlebih:
+
+### 1. Data Kecamatan (`assets/banjarnegara_kecamatan.geojson`)
+- **Total Fitur:** 20 Kecamatan (Banjarmangu, Banjarnegara, Batur, Bawang, Kalibening, Karangkobar, Madukara, Mandiraja, Pagedongan, Pagentan, Pandanarum, Pejawaran, Punggelan, Purwanegara, Purwarejaklampok, Rakit, Sigaluh, Susukan, Wanadadi, Wanayasa).
+- **Struktur Properti:** `{ "Kecamatan": string, "Name": string }`
+- **Ukuran Berkas:** ~817 KB
+
+### 2. Data Desa / Kelurahan (`assets/banjarnegara_desa.geojson`)
+- **Total Fitur:** 278 Desa/Kelurahan
+- **Struktur Properti:** `{ "OBJECTID": number, "Nama_Desa_": string, "Kecamatan": string, "Kabupaten": string }`
+- **Ukuran Berkas:** ~2.63 MB
+
+### 3. Bounding Box & Koordinat Geografis (WGS84)
+- **Rentang Bujur (Longitude):** `109.361515` s/d `109.917709`
+- **Rentang Lintang (Latitude):** `-7.540894` s/d `-7.170981`
+- **Titik Tengah (Center):** `[109.639612, -7.355938]`
+- **Array Bounds untuk MapLibre `fitBounds`:**
+  ```javascript
+  const BANJARNEGARA_BOUNDS = [
+    [109.361515, -7.540894], // Barat Daya (Southwest)
+    [109.917709, -7.170981]  // Timur Laut (Northeast)
+  ];
+  ```
 
 ---
 
