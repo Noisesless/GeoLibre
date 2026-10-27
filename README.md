@@ -32,6 +32,17 @@ Proyek hulu [opengeos/GeoLibre](https://github.com/opengeos/GeoLibre) adalah pla
 ```text
 GeoLibre/ (maplibre-starter-kit)
 │
+├── .docs/                          # 📚 9 Berkas Dokumentasi Arsitektur & Standar Brainvibes
+│   ├── architecture.md              # Aliran data WebGL, engine, & diagram arsitektur
+│   ├── api-spec.md                  # Spesifikasi tile eksternal & antarmuka helper lokal
+│   ├── database.md                  # Skema GeoJSON spasial, checksum, & kamus data atribut
+│   ├── quality_review.md            # Hasil audit, resolusi celah teknis, & zero error metric
+│   ├── routes.md                    # Peta rute halaman HTML & komponen React/Next.js
+│   ├── dependency-graph.md          # Analisis dampak file kritis, tingkat tinggi, & leaf
+│   ├── deployment.md                # Target hosting, checklist pra-deploy, & rollback
+│   ├── issues.md                    # Log isu teknis & resolusi perbaikan (FIFO buffer)
+│   └── design-system.md             # Visual DNA, token komponen §7B, & breakpoint responsif
+│
 ├── assets/                          # 📦 Bundel aset biner lokal & data spasial siap pakai
 │   ├── maplibre-gl.js               # Standalone UMD Library MapLibre GL JS (Bisa dibuka langsung / offline)
 │   ├── maplibre-gl.mjs              # ES Module library MapLibre GL JS (untuk bundler modern)
@@ -50,11 +61,11 @@ GeoLibre/ (maplibre-starter-kit)
 │   └── 03-vanilla-3d-buildings.html # Peta 3D perkotaan dengan ekstrusi bangunan (fill-extrusion)
 │
 ├── templates/                       # ⚛️ Komponen siap pakai untuk React / Next.js
-│   ├── Map2DComponent.tsx           # Komponen React 2D interaktif (Liberty, Positron, Satelit, Dual GeoJSON)
+│   ├── Map2DComponent.tsx           # Komponen React 2D interaktif (5 Basemap, Dual GeoJSON, Idle Hook)
 │   └── Map3DComponent.tsx           # Komponen React 3D dengan toggle terrain, rotasi, & atmosfer langit
 │
 ├── .gitignore                       # Konfigurasi pengabaian file Git
-├── app-context.md                   # Snapshot state arsitektur & konteks proyek
+├── app-context.md                   # Snapshot state arsitektur & konteks proyek (Brainvibes SSOT)
 └── README.md                        # Dokumentasi teknis utama
 ```
 
@@ -76,11 +87,11 @@ Seluruh contoh pada direktori `examples/` dirancang agar dapat diuji tanpa konfi
    # Buka direktori di VS Code -> Klik kanan pada file HTML -> "Open with Live Server"
    ```
    - **Peta 2D Interaktif:** [examples/01-vanilla-2d.html](examples/01-vanilla-2d.html)
-     *Fitur:* Switcher gaya peta (Liberty, Positron, Esri Satelit), filter dropdown 20 kecamatan dengan auto `fitBounds`, toggle layer batas kecamatan dan desa, serta pop-up hover & info-card interaktif.
+     *Fitur:* Switcher 5 gaya peta (Liberty, Positron, Bright, Dark OFM, Esri Satelit), filter dropdown 20 kecamatan dengan auto `fitBounds`, pencarian autocomplete instan, persistensi otomatis batas kecamatan dan desa saat pergantian basemap (via event `idle`), serta pop-up hover & info-card interaktif.
    - **Peta 3D Topografi Gunung (DEM):** [examples/02-vanilla-3d-terrain.html](examples/02-vanilla-3d-terrain.html)
-     *Fitur:* Elevasi topografi 3D nyata bersumber dari data raster DEM Terrarium, pengatur kemiringan (*pitch* 0°–85°), rotasi (*bearing*), pengali tinggi lembah/gunung (*exaggeration slider*), efek kabut atmosfer cakrawala (*sky/fog*), serta auto-rotation kamera orbit.
+     *Fitur:* Elevasi topografi 3D nyata bersumber dari data raster DEM Terrarium, batas wilayah 3D, pengatur kemiringan (*pitch* 0°–85°), rotasi (*bearing*), pengali tinggi lembah/gunung (*exaggeration slider*), efek kabut atmosfer cakrawala (*sky/fog*), serta auto-rotation kamera orbit.
    - **Peta 3D Ekstrusi Gedung Perkotaan:** [examples/03-vanilla-3d-buildings.html](examples/03-vanilla-3d-buildings.html)
-     *Fitur:* Visualisasi gedung bertingkat 3D secara otomatis memanfaatkan layer data OpenMapTiles/OpenFreeMap dengan filter `["==", "extrude", "true"]` dan interpolasi ketinggian `render_height`.
+     *Fitur:* Visualisasi gedung bertingkat 3D secara otomatis memanfaatkan layer data OpenMapTiles/OpenFreeMap (`fill-extrusion`) terintegrasi langsung dengan batas spasial kecamatan & desa di dasar peta, dilengkapi tombol fokus kawasan, *Overview Kabupaten*, serta toggle batas wilayah.
 
 ---
 
@@ -262,6 +273,7 @@ Seluruh template dan demo pada repositori ini menggunakan sumber data peta terbu
 | **OpenFreeMap Liberty** | Vektor Basemap | `https://tiles.openfreemap.org/styles/liberty` | Gratis, open-source, tanpa limit kuota ketat |
 | **OpenFreeMap Positron** | Vektor Minimalis | `https://tiles.openfreemap.org/styles/positron` | Cocok untuk visualisasi tematik data bisnis/analisis |
 | **OpenFreeMap Bright** | Vektor Terang | `https://tiles.openfreemap.org/styles/bright` | Gaya kartografi klasik OpenStreetMap |
+| **OpenFreeMap Dark** | Vektor Mode Gelap | `https://tiles.openfreemap.org/styles/dark` | 100% Gratis & legal, tanpa API key (Pengganti CartoDB) |
 | **Esri World Imagery** | Raster Satelit | `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}` | Citra satelit resolusi tinggi global |
 | **AWS Terrarium DEM** | Raster Elevasi 3D | `https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png` | Model elevasi digital global (*format: terrarium*) |
 
@@ -285,15 +297,23 @@ Jika Anda membutuhkan analisis geospasial tingkat lanjut yang melampaui visualis
 
 ## 🛠️ Troubleshooting & Praktik Terbaik
 
+- **Batas Wilayah Hilang Saat Ganti Basemap (Peta 2D):**
+  *Penyebab:* Pemanggilan `map.setStyle()` secara internal menghapus seluruh canvas WebGL dan layer kustom sebelumnya.
+  *Solusi:* Pasang event hook `map.on("idle", applyGeoJsonLayers)` agar layer batas otomatis terpasang kembali begitu render gaya baru selesai.
+- **Tampilan Peta Gelap Bertuliskan "API KEY REQUIRED":**
+  *Penyebab:* Penggunaan raster CartoDB Dark Matter yang kini mewajibkan kuota dan API key berbayar.
+  *Solusi:* Gunakan endpoint vektor gratis OpenFreeMap Dark: `https://tiles.openfreemap.org/styles/dark`.
 - **Peta Muncul Sebagai Kotak Putih/Abu-Abu (Blank Screen):**
   *Penyebab:* File `maplibre-gl-worker.mjs` tidak dapat ditemukan oleh browser atau terblokir kebijakan MIME-type.
   *Solusi:* Pastikan file worker disalin ke direktori publik server web dan `maplibregl.setWorkerUrl()` merujuk pada path yang valid.
 - **CORS Error saat Memuat GeoJSON Lokal:**
   *Penyebab:* Membuka file HTML secara langsung menggunakan protokol `file://`.
-  *Solusi:* Selalu gunakan local HTTP server (seperti `npx serve .` atau ekstensi VS Code Live Server).
+  *Solusi:* Selalu gunakan local HTTP server (seperti `npx serve .` atau ekstensi VS Code Live Server) atau sertakan `assets/geojson/banjarnegara-data.js`.
 - **WebGL Context Lost pada Perangkat Mobile:**
   *Penyebab:* Memori GPU ponsel penuh karena memuat DEM terrain dengan resolusi terlalu tinggi sekaligus.
   *Solusi:* Atur `maxzoom: 14` pada sumber data DEM raster atau turunkan `exaggeration` saat mendeteksi layar berdimensi kecil.
+- **Dokumentasi Teknis Lengkap:**
+  Rujuk direktori [/.docs/](.docs/) untuk 9 dokumen standar Brainvibes (Arsitektur, Spesifikasi API, Database, Tinjauan Kualitas, Rute, Graf Dependensi, Deployment, Isu FIFO, dan Sistem Desain).
 
 ---
 
