@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MapLibre GL 3D — 3D Buildings Extrusion (Gedung & Bangunan 3D)</title>
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@6.16.0/dist/maplibre-gl.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: #0b0f19; color: #f8fafc; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+    
+    header {
+      background: #111827;
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #1f2937;
+      z-index: 10;
+    }
+    header h1 { font-size: 16px; font-weight: 700; color: #38bdf8; display: flex; align-items: center; gap: 8px; }
+    header p { font-size: 12px; color: #9ca3af; }
+    .badge { background: #10b981; color: #fff; font-size: 10px; padding: 2px 7px; border-radius: 4px; font-weight: 800; }
+
+    #map-wrapper { position: relative; flex: 1; width: 100%; height: 100%; }
+    #map { width: 100%; height: 100%; }
+
+    .control-panel {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: rgba(17, 24, 39, 0.94);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      padding: 14px 16px;
+      border-radius: 10px;
+      z-index: 20;
+      width: 260px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    }
+    .panel-title { font-size: 11px; font-weight: 700; color: #7dd3fc; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+    .btn {
+      width: 100%;
+      background: #1f2937;
+      color: #e5e7eb;
+      border: 1px solid #374151;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 6px;
+      transition: all 0.2s;
+    }
+    .btn:hover { background: #374151; color: #fff; }
+    .btn-primary { background: #0284c7; border-color: #38bdf8; color: #fff; }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Template Acuan 3D Buildings <span class="badge">Ekstrusi Bangunan</span></h1>
+      <p>Teknik Ekstrusi Vektor 3D (Fill-Extrusion) untuk Peta Kawasan Perkotaan / Smart City</p>
+    </div>
+  </header>
+
+  <div id="map-wrapper">
+    <div id="map"></div>
+
+    <div class="control-panel">
+      <div class="panel-title">Fokus Kawasan</div>
+      <button class="btn btn-primary" onclick="focusCity()">Fokus Alun-Alun Banjarnegara</button>
+      <button class="btn" onclick="focusKecamatan()">Fokus Kantor Kecamatan Banjarmangu</button>
+      <button class="btn" onclick="toggle3D()">Toggle Kemiringan Kamera</button>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/maplibre-gl@6.16.0/dist/maplibre-gl.js"></script>
+  <script>
+    const map = new maplibregl.Map({
+      container: "map",
+      style: "https://tiles.openfreemap.org/styles/liberty",
+      center: [109.697, -7.398], // Alun-Alun Banjarnegara
+      zoom: 16.5,
+      pitch: 60,
+      bearing: -15,
+      attributionControl: false
+    });
+
+    map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-left");
+
+    map.on("load", () => {
+      // Dapatkan layer label pertama agar gedung 3D dirender di bawah label nama jalan
+      const layers = map.getStyle().layers;
+      let labelLayerId;
+      for (let i = 0; i < layers.length; i++) {
+        if (layers[i].type === "symbol" && layers[i].layout && layers[i].layout["text-field"]) {
+          labelLayerId = layers[i].id;
+          break;
+        }
+      }
+
+      // Tambahkan Layer 3D Buildings (Fill Extrusion)
+      // OpenFreeMap menyertakan layer vektor 'building' di OpenMapTiles schema
+      if (map.getSource("openmaptiles")) {
+        map.addLayer(
+          {
+            id: "3d-buildings",
+            source: "openmaptiles",
+            "source-layer": "building",
+            filter: ["==", "extrude", "true"],
+            type: "fill-extrusion",
+            minzoom: 14,
+            paint: {
+              "fill-extrusion-color": [
+                "interpolate",
+                ["linear"],
+                ["get", "render_height"],
+                0, "#e2e8f0",
+                20, "#93c5fd",
+                50, "#3b82f6"
+              ],
+              "fill-extrusion-height": [
+                "interpolate",
+                ["linear"],
+                ["zoom"],
+                14, 0,
+                14.05, ["get", "render_height"]
+              ],
+              "fill-extrusion-base": [
+                "interpolate",
+                ["linear"],
+                ["zoom"],
+                14, 0,
+                14.05, ["get", "render_min_height"]
+              ],
+              "fill-extrusion-opacity": 0.85
+            }
+          },
+          labelLayerId
+        );
+      }
+    });
+
+    function focusCity() {
+      map.flyTo({
+        center: [109.697, -7.398],
+        zoom: 16.8,
+        pitch: 65,
+        bearing: 30,
+        duration: 2000
+      });
+    }
+
+    function focusKecamatan() {
+      map.flyTo({
+        center: [109.685, -7.339],
+        zoom: 15.5,
+        pitch: 55,
+        bearing: -20,
+        duration: 2000
+      });
+    }
+
+    let isPitched = true;
+    function toggle3D() {
+      isPitched = !isPitched;
+      map.easeTo({
+        pitch: isPitched ? 60 : 0,
+        bearing: isPitched ? -15 : 0,
+        duration: 1200
+      });
+    }
+  </script>
+</body>
+</html>
