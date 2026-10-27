@@ -417,18 +417,14 @@
     </div>
   </div>
 
-  <!-- MapLibre GL JS Script -->
-  <script src="../assets/maplibre-gl.mjs" type="module"></script>
-  <script src="https://unpkg.com/maplibre-gl@6.16.0/dist/maplibre-gl.js"></script>
+  <!-- MapLibre GL JS Local UMD Bundle (Mandiri & Bebas Dependency Eksternal) -->
+  <script src="../assets/maplibre-gl.js"></script>
   <!-- Konfigurasi Peta Banjarnegara -->
   <script src="../assets/map-config.js"></script>
+  <!-- Data Spasial Baku (Mendukung Protokol file:// & http://) -->
+  <script src="../assets/geojson/banjarnegara-data.js"></script>
 
   <script>
-    // Konfigurasi Web Worker Lokal
-    if (typeof maplibregl !== "undefined") {
-      maplibregl.setWorkerUrl("../assets/maplibre-gl-worker.mjs");
-    }
-
     const CONFIG = window.BANJARNEGARA_MAP;
 
     let activeStyleKey = "liberty";
@@ -553,11 +549,15 @@
 
     map.on("styledata", applyGeoJsonLayers);
 
-    // Ambil Data GeoJSON Baku dari subfolder assets/geojson/
-    Promise.all([
-      fetch(CONFIG.paths.kecamatan).then(r => r.json()),
-      fetch(CONFIG.paths.desa).then(r => r.json())
-    ]).then(([kecData, desaData]) => {
+    // Ambil Data GeoJSON Baku (prioritaskan data instan dari window.BANJARNEGARA_GEOJSON agar jalan di file://)
+    const loadDataPromise = (window.BANJARNEGARA_GEOJSON && window.BANJARNEGARA_GEOJSON.kecamatan)
+      ? Promise.resolve([window.BANJARNEGARA_GEOJSON.kecamatan, window.BANJARNEGARA_GEOJSON.desa])
+      : Promise.all([
+          fetch(CONFIG.paths.kecamatan).then(r => r.json()),
+          fetch(CONFIG.paths.desa).then(r => r.json())
+        ]);
+
+    loadDataPromise.then(([kecData, desaData]) => {
       kecGeoJson = kecData;
 
       const kecMap = {};

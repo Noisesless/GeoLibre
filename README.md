@@ -33,13 +33,15 @@ Proyek hulu [opengeos/GeoLibre](https://github.com/opengeos/GeoLibre) adalah pla
 GeoLibre/ (maplibre-starter-kit)
 │
 ├── assets/                          # 📦 Bundel aset biner lokal & data spasial siap pakai
-│   ├── maplibre-gl.mjs              # ES Module library utama MapLibre GL JS (v6.16+)
-│   ├── maplibre-gl-worker.mjs       # Dedicated Web Worker (Wajib untuk decode Vector Tile & GeoJSON)
-│   ├── maplibre-gl.css              # Stylesheet UI & kontrol peta
+│   ├── maplibre-gl.js               # Standalone UMD Library MapLibre GL JS (Bisa dibuka langsung / offline)
+│   ├── maplibre-gl.mjs              # ES Module library MapLibre GL JS (untuk bundler modern)
+│   ├── maplibre-gl-worker.mjs       # Dedicated Web Worker (Wajib untuk Next.js / Webpack)
+│   ├── maplibre-gl.css              # Stylesheet UI & kontrol peta lokal
 │   ├── map-config.js                # Modul konfigurasi standar peta 2D (5 Basemap, search, bounds)
 │   └── geojson/                     # 📂 Direktori Baku Data Spasial (Single Source of Truth)
 │       ├── banjarnegara-kecamatan.geojson # Batas 20 Kecamatan Kabupaten Banjarnegara (817 KB)
 │       ├── banjarnegara-desa.geojson      # Batas 278 Desa/Kelurahan Kabupaten Banjarnegara (2.63 MB)
+│       ├── banjarnegara-data.js           # Data spasial instan (Bypass CORS pada protokol file://)
 │       └── metadata.json                  # SSOT metadata spasial, checksum, skema atribut & BBox
 │
 ├── examples/                        # 🚀 Demo HTML Standalone (Bisa langsung dibuka di browser)

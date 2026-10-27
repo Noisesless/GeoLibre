@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MapLibre GL 3D — Template Acuan Proyek (3D Terrain & DEM)</title>
-  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@6.16.0/dist/maplibre-gl.css">
+  <link rel="stylesheet" href="../assets/maplibre-gl.css">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: system-ui, -apple-system, sans-serif; background: #090d16; color: #f8fafc; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
@@ -103,7 +103,8 @@
     </div>
   </div>
 
-  <script src="https://unpkg.com/maplibre-gl@6.16.0/dist/maplibre-gl.js"></script>
+  <script src="../assets/maplibre-gl.js"></script>
+  <script src="../assets/geojson/banjarnegara-data.js"></script>
   <script>
     let isRotating = false;
     let rotationReq = null;
@@ -113,8 +114,8 @@
     const map = new maplibregl.Map({
       container: "map",
       style: "https://tiles.openfreemap.org/styles/liberty",
-      center: [109.685, -7.339],
-      zoom: 12.8,
+      center: [109.639612, -7.355938],
+      zoom: 12.0,
       pitch: 65,      // Kemiringan kamera 3D
       bearing: -20,    // Rotasi sudut pandang
       maxPitch: 85,
@@ -151,10 +152,14 @@
       });
 
       // 3. Muat Batas Wilayah GeoJSON 2D di atas medan 3D
-      Promise.all([
-        fetch("../assets/peta_kecamatan.geojson").then(r => r.json()),
-        fetch("../assets/peta_desa.geojson").then(r => r.json())
-      ]).then(([kec, desa]) => {
+      const loadData = window.BANJARNEGARA_GEOJSON
+        ? Promise.resolve([window.BANJARNEGARA_GEOJSON.kecamatan, window.BANJARNEGARA_GEOJSON.desa])
+        : Promise.all([
+            fetch("../assets/geojson/banjarnegara-kecamatan.geojson").then(r => r.json()),
+            fetch("../assets/geojson/banjarnegara-desa.geojson").then(r => r.json())
+          ]);
+
+      loadData.then(([kec, desa]) => {
         // Garis batas kecamatan
         map.addSource("kec-3d-source", { type: "geojson", data: kec });
         map.addLayer({
@@ -249,8 +254,8 @@
 
     function resetCamera() {
       map.flyTo({
-        center: [109.685, -7.339],
-        zoom: 12.8,
+        center: [109.639612, -7.355938],
+        zoom: 12.0,
         pitch: 65,
         bearing: -20,
         duration: 1500
