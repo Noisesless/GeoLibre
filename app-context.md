@@ -51,4 +51,4 @@ templates/Map2DComponent.tsx = "React/Next.js 2D Component with 5 Basemap Styles
 templates/Map3DComponent.tsx = "React/Next.js 3D Component with Terrain DEM"
 
 [NEXT]
-task = "Ready for feature addition or production web deployment"
+task = "Pengecekan dan validasi batas bagian timur Kecamatan Sigaluh vs dataset GeoJSON pembanding (todo.md)"
