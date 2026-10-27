@@ -1,6 +1,6 @@
 /**
  * assets/map-config.js
- * Konfigurasi Standar Peta 2D & Spasial Kabupaten Banjarnegara
+ * Modul Konfigurasi Baku Peta 2D & Spasial Kabupaten Banjarnegara
  * Kompatibel dengan MapLibre GL JS v6+ (Vanilla JS & Modern Framework)
  */
 
@@ -28,6 +28,14 @@
       [109.917709, -7.170981], // Timur Laut (Northeast)
     ],
 
+    // Path Berkas Baku
+    paths: {
+      kecamatan: "../assets/geojson/banjarnegara-kecamatan.geojson",
+      desa: "../assets/geojson/banjarnegara-desa.geojson",
+      metadata: "../assets/geojson/metadata.json",
+      worker: "../assets/maplibre-gl-worker.mjs",
+    },
+
     // Daftar 20 Kecamatan Resmi
     kecamatanList: [
       "Banjarmangu", "Banjarnegara", "Batur", "Bawang",
@@ -41,7 +49,34 @@
     styles: {
       liberty: "https://tiles.openfreemap.org/styles/liberty",
       positron: "https://tiles.openfreemap.org/styles/positron",
-      satelite: {
+      bright: "https://tiles.openfreemap.org/styles/bright",
+      dark: {
+        version: 8,
+        sources: {
+          "carto-dark": {
+            type: "raster",
+            tiles: [
+              "https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png",
+              "https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png",
+              "https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png",
+              "https://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png"
+            ],
+            tileSize: 256,
+            maxzoom: 19,
+            attribution: "&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors &copy; <a href='https://carto.com/attributions'>CARTO</a>",
+          },
+        },
+        layers: [
+          {
+            id: "carto-dark-layer",
+            type: "raster",
+            source: "carto-dark",
+            minzoom: 0,
+            maxzoom: 19,
+          },
+        ],
+      },
+      satelit: {
         version: 8,
         sources: {
           "esri-satellite": {
@@ -66,25 +101,50 @@
       },
     },
 
-    // Palet Warna Wilayah Tematik
+    // Palet Warna Wilayah Tematik Harmonis
     colors: [
-      "#38bdf8", "#34d399", "#fbbf24", "#f87171", "#a78bfa",
-      "#f472b6", "#2dd4bf", "#fb923c", "#818cf8", "#4ade80",
-      "#e879f9", "#60a5fa", "#facc15", "#22d3ee", "#c084fc",
-      "#a3e635", "#f43f5e", "#0ea5e9", "#10b981", "#eab308"
+      "#0284c7", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6",
+      "#ec4899", "#14b8a6", "#f97316", "#6366f1", "#84cc16",
+      "#06b6d4", "#d946ef", "#eab308", "#3b82f6", "#22c55e",
+      "#a855f7", "#fb7185", "#38bdf8", "#34d399", "#fb923c"
     ],
 
     // Setup Layer Kecamatan & Desa pada MapLibre Instance
     setupLayers: function (map, geojsonData, options) {
       options = options || {};
       const desaColor = options.desaColor || "#0284c7";
-      const kecBorderColor = options.kecBorderColor || "#1e293b";
+      const kecBorderColor = options.kecBorderColor || "#0284c7";
 
-      // 1. Tambah / Perbarui Sumber Data GeoJSON
       if (!map.getSource("banjarnegara-desa-source") && geojsonData.desa) {
         map.addSource("banjarnegara-desa-source", {
           type: "geojson",
           data: geojsonData.desa,
+        });
+
+        map.addLayer({
+          id: "banjarnegara-desa-fill",
+          type: "fill",
+          source: "banjarnegara-desa-source",
+          paint: {
+            "fill-color": ["coalesce", ["get", "_color"], desaColor],
+            "fill-opacity": [
+              "case",
+              ["boolean", ["feature-state", "hover"], false],
+              0.8,
+              0.4
+            ],
+          },
+        });
+
+        map.addLayer({
+          id: "banjarnegara-desa-line",
+          type: "line",
+          source: "banjarnegara-desa-source",
+          paint: {
+            "line-color": "#ffffff",
+            "line-width": 0.8,
+            "line-opacity": 0.6,
+          },
         });
       }
 
@@ -93,61 +153,40 @@
           type: "geojson",
           data: geojsonData.kecamatan,
         });
-      }
 
-      // 2. Layer Desa (Poligon Fill & Garis Batas)
-      if (map.getSource("banjarnegara-desa-source")) {
-        if (!map.getLayer("banjarnegara-desa-fill")) {
-          map.addLayer({
-            id: "banjarnegara-desa-fill",
-            type: "fill",
-            source: "banjarnegara-desa-source",
-            paint: {
-              "fill-color": [
-                "coalesce",
-                ["get", "_color"],
-                desaColor
-              ],
-              "fill-opacity": [
-                "case",
-                ["boolean", ["feature-state", "hover"], false],
-                0.75,
-                0.35
-              ],
-            },
-          });
-        }
-
-        if (!map.getLayer("banjarnegara-desa-line")) {
-          map.addLayer({
-            id: "banjarnegara-desa-line",
-            type: "line",
-            source: "banjarnegara-desa-source",
-            paint: {
-              "line-color": "#ffffff",
-              "line-width": 0.8,
-              "line-opacity": 0.6,
-            },
-          });
-        }
-      }
-
-      // 3. Layer Kecamatan (Garis Batas Tegas & Label Simbol)
-      if (map.getSource("banjarnegara-kec-source")) {
-        if (!map.getLayer("banjarnegara-kec-line")) {
-          map.addLayer({
-            id: "banjarnegara-kec-line",
-            type: "line",
-            source: "banjarnegara-kec-source",
-            paint: {
-              "line-color": kecBorderColor,
-              "line-width": 2.2,
-              "line-dasharray": [3, 1.5],
-            },
-          });
-        }
+        map.addLayer({
+          id: "banjarnegara-kec-line",
+          type: "line",
+          source: "banjarnegara-kec-source",
+          paint: {
+            "line-color": kecBorderColor,
+            "line-width": 2.2,
+            "line-dasharray": [3, 2],
+          },
+        });
       }
     },
+
+    // Helper Pencarian Nama Desa / Kecamatan
+    searchFeatures: function (query, desaFeatures, limit) {
+      limit = limit || 8;
+      if (!query || !query.trim() || !desaFeatures) return [];
+      const q = query.toLowerCase().trim();
+      const results = [];
+
+      for (let i = 0; i < desaFeatures.length; i++) {
+        const feat = desaFeatures[i];
+        const props = feat.properties || {};
+        const namaDesa = (props.Nama_Desa_ || props.Name || "").toLowerCase();
+        const kec = (props.Kecamatan || "").toLowerCase();
+
+        if (namaDesa.includes(q) || kec.includes(q)) {
+          results.push(feat);
+          if (results.length >= limit) break;
+        }
+      }
+      return results;
+    }
   };
 
   return BANJARNEGARA_CONFIG;

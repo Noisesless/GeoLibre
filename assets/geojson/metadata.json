@@ -1,0 +1,45 @@
+{
+  "project": "GeoLibre Map Starter Kit",
+  "region": "Kabupaten Banjarnegara, Jawa Tengah, Indonesia",
+  "datum": "WGS 84 (EPSG:4326)",
+  "precision": "6 decimal places (~0.11 meter resolution)",
+  "elevation_dimension": "Removed (2D planar vector)",
+  "source_upstream": "D:\\Project\\pertanian_main\\dist\\ (SISPERTANI Banjarnegara / BPS / BIG)",
+  "updated_at": "2026-10-27T16:06:00+07:00",
+  "center": [109.639612, -7.355938],
+  "bounds": {
+    "southwest": [109.361515, -7.540894],
+    "northeast": [109.917709, -7.170981]
+  },
+  "datasets": {
+    "kecamatan": {
+      "filename": "banjarnegara-kecamatan.geojson",
+      "total_features": 20,
+      "size_bytes": 817744,
+      "geometry_type": "Polygon / MultiPolygon",
+      "attributes": {
+        "Kecamatan": "Nama kecamatan dalam huruf kecil (e.g., 'susukan', 'mandiraja', 'banjarmangu')",
+        "Name": "Nama kecamatan alternatif standar"
+      },
+      "list": [
+        "Banjarmangu", "Banjarnegara", "Batur", "Bawang",
+        "Kalibening", "Karangkobar", "Madukara", "Mandiraja",
+        "Pagedongan", "Pagentan", "Pandanarum", "Pejawaran",
+        "Punggelan", "Purwanegara", "Purwarejaklampok", "Rakit",
+        "Sigaluh", "Susukan", "Wanadadi", "Wanayasa"
+      ]
+    },
+    "desa": {
+      "filename": "banjarnegara-desa.geojson",
+      "total_features": 278,
+      "size_bytes": 2635339,
+      "geometry_type": "Polygon / MultiPolygon",
+      "attributes": {
+        "OBJECTID": "ID numerik unik dari shapefile referensi",
+        "Nama_Desa_": "Nama resmi desa/kelurahan (e.g., 'Desa Brengkok', 'Desa Parakan')",
+        "Kecamatan": "Nama kecamatan dengan prefix (e.g., 'Kec.Susukan', 'Kec.Purwanegara')",
+        "Kabupaten": "Nama kabupaten ('Banjarnegara')"
+      }
+    }
+  }
+}

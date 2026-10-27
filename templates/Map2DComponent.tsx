@@ -9,7 +9,7 @@ if (typeof window !== "undefined") {
   maplibregl.setWorkerUrl("/maplibre-gl-worker.mjs");
 }
 
-export type MapStyleKey = "liberty" | "positron" | "satelit";
+export type MapStyleKey = "liberty" | "positron" | "bright" | "dark" | "satelit";
 
 interface Map2DProps {
   initialCenter?: [number, number]; // [lng, lat]
@@ -24,6 +24,29 @@ interface Map2DProps {
 const STYLES: Record<MapStyleKey, string | maplibregl.StyleSpecification> = {
   liberty: "https://tiles.openfreemap.org/styles/liberty",
   positron: "https://tiles.openfreemap.org/styles/positron",
+  bright: "https://tiles.openfreemap.org/styles/bright",
+  dark: {
+    version: 8,
+    sources: {
+      "carto-dark": {
+        type: "raster",
+        tiles: [
+          "https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png",
+          "https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png",
+          "https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png",
+        ],
+        tileSize: 256,
+        maxzoom: 19,
+      },
+    },
+    layers: [
+      {
+        id: "carto-dark-layer",
+        type: "raster",
+        source: "carto-dark",
+      },
+    ],
+  } as unknown as maplibregl.StyleSpecification,
   satelit: {
     version: 8,
     sources: {
@@ -49,8 +72,8 @@ const STYLES: Record<MapStyleKey, string | maplibregl.StyleSpecification> = {
 export default function Map2DComponent({
   initialCenter = [109.639612, -7.355938],
   initialZoom = 10.6,
-  desaGeojsonUrl = "/assets/banjarnegara_desa.geojson",
-  kecamatanGeojsonUrl = "/assets/banjarnegara_kecamatan.geojson",
+  desaGeojsonUrl = "/assets/geojson/banjarnegara-desa.geojson",
+  kecamatanGeojsonUrl = "/assets/geojson/banjarnegara-kecamatan.geojson",
   geojsonUrl,
   onFeatureClick,
   className = "w-full h-[550px]",
@@ -153,7 +176,7 @@ export default function Map2DComponent({
     <div className={`relative rounded-xl overflow-hidden shadow-md border border-slate-200 ${className}`}>
       <div ref={containerRef} className="w-full h-full" />
       <div className="absolute top-3 right-3 z-10 flex gap-1 p-1 bg-white/90 backdrop-blur rounded-lg shadow border border-slate-200">
-        {(["liberty", "positron", "satelit"] as MapStyleKey[]).map((key) => (
+        {(["liberty", "positron", "bright", "dark", "satelit"] as MapStyleKey[]).map((key) => (
           <button
             key={key}
             onClick={() => switchStyle(key)}

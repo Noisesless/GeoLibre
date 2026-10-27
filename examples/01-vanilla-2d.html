@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Peta 2D Banjarnegara — MapLibre GL JS (Liberty, Positron & Satelit)</title>
+  <title>Peta 2D Banjarnegara — MapLibre GL JS (Liberty, Positron, Bright, Dark & Satelit)</title>
   
   <!-- Font Google: Outfit (Heading) & Inter (Body) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -87,6 +87,68 @@
       height: 100%;
     }
 
+    /* Search Bar Overlay (Top Left) */
+    .search-box-container {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      z-index: 25;
+      width: 300px;
+      max-width: calc(100vw - 32px);
+    }
+    .search-input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .search-input {
+      width: 100%;
+      background: var(--vibe-surface);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--vibe-border);
+      color: #f8fafc;
+      padding: 10px 14px;
+      border-radius: var(--radius-md);
+      font-size: 12.5px;
+      font-family: var(--vibe-font-body);
+      outline: none;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+      transition: border-color 0.2s;
+    }
+    .search-input:focus {
+      border-color: #38bdf8;
+    }
+    .search-results {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: var(--radius-md);
+      max-height: 240px;
+      overflow-y: auto;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.5);
+      display: none;
+    }
+    .search-item {
+      padding: 9px 12px;
+      font-size: 12px;
+      border-bottom: 1px solid #1e293b;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .search-item:last-child { border-bottom: none; }
+    .search-item:hover {
+      background: #1e293b;
+      color: #38bdf8;
+    }
+    .search-item-sub {
+      font-size: 11px;
+      color: var(--vibe-text-sub);
+    }
+
     /* Floating Control Panel (Top-Right) */
     .control-panel {
       position: absolute;
@@ -113,20 +175,26 @@
       margin-bottom: 8px;
     }
 
-    /* Layer Switcher Button Group */
+    /* Layer Switcher Button Group (5 Styles) */
     .btn-group {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 6px;
+      gap: 5px;
+      margin-bottom: 8px;
+    }
+    .btn-group-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 5px;
       margin-bottom: 14px;
     }
     .btn-layer {
       background: #1e293b;
       color: #cbd5e1;
       border: 1px solid #334155;
-      padding: 8px 6px;
+      padding: 7px 4px;
       border-radius: var(--radius-sm);
-      font-size: 11.5px;
+      font-size: 11px;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.2s ease-in-out;
@@ -180,18 +248,23 @@
       height: 16px;
     }
 
+    .btn-grid-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-top: 8px;
+    }
     .btn-action {
-      width: 100%;
       background: #1e293b;
       color: #e2e8f0;
       border: 1px solid #334155;
-      padding: 8px 12px;
+      padding: 7px 10px;
       border-radius: var(--radius-sm);
-      font-size: 12px;
+      font-size: 11.5px;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.2s;
-      margin-top: 6px;
+      text-align: center;
     }
     .btn-action:hover {
       background: #334155;
@@ -264,7 +337,8 @@
     /* Responsive adjustments */
     @media (max-width: 640px) {
       header { padding: 10px 14px; flex-direction: column; align-items: flex-start; gap: 4px; }
-      .control-panel { top: 10px; right: 10px; width: calc(100vw - 20px); padding: 12px; }
+      .search-box-container { top: 10px; left: 10px; width: calc(100vw - 20px); }
+      .control-panel { top: 62px; right: 10px; width: calc(100vw - 20px); padding: 12px; }
       .info-card { display: none; }
     }
   </style>
@@ -275,21 +349,40 @@
       <div class="brand-title">
         Peta 2D Kabupaten Banjarnegara
       </div>
-      <div class="brand-subtitle">Visualisasi Layer Batas Wilayah: 20 Kecamatan & 278 Desa</div>
+      <div class="brand-subtitle">Visualisasi Layer Batas Spasial Baku: 20 Kecamatan & 278 Desa</div>
     </div>
     <span class="badge-scope">GeoLibre Starter Kit</span>
   </header>
 
   <div id="map-wrapper">
+    <!-- Autocomplete Search Bar -->
+    <div class="search-box-container">
+      <div class="search-input-wrapper">
+        <input 
+          type="text" 
+          id="search-input" 
+          class="search-input" 
+          placeholder="Cari desa atau kecamatan..." 
+          autocomplete="off"
+          oninput="onSearchInput(this.value)"
+        />
+      </div>
+      <div id="search-results" class="search-results"></div>
+    </div>
+
     <div id="map"></div>
 
     <!-- Floating Control Panel -->
     <div class="control-panel">
-      <div class="panel-section-title">Gaya Peta Dasar (Basemap)</div>
+      <div class="panel-section-title">Gaya Peta Dasar (5 Basemap)</div>
       <div class="btn-group">
         <button id="btn-liberty" class="btn-layer active" onclick="setBasemap('liberty')">Liberty</button>
         <button id="btn-positron" class="btn-layer" onclick="setBasemap('positron')">Positron</button>
-        <button id="btn-satelit" class="btn-layer" onclick="setBasemap('satelit')">Satelit</button>
+        <button id="btn-bright" class="btn-layer" onclick="setBasemap('bright')">Bright</button>
+      </div>
+      <div class="btn-group-2">
+        <button id="btn-dark" class="btn-layer" onclick="setBasemap('dark')">Dark Matter</button>
+        <button id="btn-satelit" class="btn-layer" onclick="setBasemap('satelit')">Satelit Esri</button>
       </div>
 
       <div class="panel-section-title">Filter Kecamatan</div>
@@ -309,14 +402,17 @@
         <input type="checkbox" id="toggle-desa" checked onchange="toggleLayerVisibility('layer-desa-fill', this.checked)">
       </div>
 
-      <button id="btn-reset-view" class="btn-action" onclick="resetBanjarnegaraBounds()">Reset Tampilan Banjarnegara</button>
+      <div class="btn-grid-actions">
+        <button id="btn-reset-view" class="btn-action" onclick="resetBanjarnegaraBounds()">Reset Peta</button>
+        <button id="btn-toggle-pitch" class="btn-action" onclick="togglePerspectivePitch()">Tilt 3D (60°)</button>
+      </div>
     </div>
 
     <!-- Info Card -->
     <div id="info-card" class="info-card">
       <div class="info-card-title">Informasi Wilayah</div>
       <div id="info-content" class="info-card-text">
-        Arahkan kursor atau klik pada salah satu desa/kecamatan untuk melihat ringkasan identitas spasial.
+        Ketik nama desa di bilah pencarian atau klik pada peta untuk melihat detail atribut desa/kecamatan.
       </div>
     </div>
   </div>
@@ -333,36 +429,13 @@
       maplibregl.setWorkerUrl("../assets/maplibre-gl-worker.mjs");
     }
 
-    const CONFIG = window.BANJARNEGARA_MAP || {
-      center: [109.639612, -7.355938],
-      zoom: 10.6,
-      bounds: [[109.361515, -7.540894], [109.917709, -7.170981]],
-      styles: {
-        liberty: "https://tiles.openfreemap.org/styles/liberty",
-        positron: "https://tiles.openfreemap.org/styles/positron",
-        satelit: {
-          version: 8,
-          sources: {
-            "esri-satellite": {
-              type: "raster",
-              tiles: ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],
-              tileSize: 256,
-              maxzoom: 19
-            }
-          },
-          layers: [{ id: "esri-satellite-layer", type: "raster", source: "esri-satellite" }]
-        }
-      },
-      colors: [
-        "#0284c7", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6",
-        "#ec4899", "#14b8a6", "#f97316", "#6366f1", "#84cc16"
-      ]
-    };
+    const CONFIG = window.BANJARNEGARA_MAP;
 
     let activeStyleKey = "liberty";
     let kecGeoJson = null;
     let desaGeoJson = null;
     let selectedKecamatan = "";
+    let isPitched = false;
 
     // Inisialisasi Instance Peta
     const map = new maplibregl.Map({
@@ -370,6 +443,7 @@
       style: CONFIG.styles.liberty,
       center: CONFIG.center,
       zoom: CONFIG.zoom,
+      maxPitch: 85,
       attributionControl: false
     });
 
@@ -385,7 +459,7 @@
     function applyGeoJsonLayers() {
       if (!map.isStyleLoaded()) return;
 
-      // 1. Sumber Data Desa
+      // 1. Sumber Data Desa Baku
       if (desaGeoJson && !map.getSource("source-desa")) {
         map.addSource("source-desa", {
           type: "geojson",
@@ -401,8 +475,8 @@
             "fill-opacity": [
               "case",
               ["boolean", ["feature-state", "hover"], false],
-              0.8,
-              0.42
+              0.82,
+              0.4
             ]
           }
         });
@@ -419,7 +493,7 @@
         });
       }
 
-      // 2. Sumber Data Kecamatan
+      // 2. Sumber Data Kecamatan Baku
       if (kecGeoJson && !map.getSource("source-kec")) {
         map.addSource("source-kec", {
           type: "geojson",
@@ -439,8 +513,6 @@
       }
 
       // Event Interaksi Hover Desa
-      let hoveredStateId = null;
-
       map.on("mousemove", "layer-desa-fill", (e) => {
         if (!e.features.length) return;
         map.getCanvas().style.cursor = "pointer";
@@ -474,7 +546,6 @@
         popup.remove();
       });
 
-      // Filter ulang jika ada filter aktif saat ganti style
       if (selectedKecamatan) {
         applyFilter(selectedKecamatan);
       }
@@ -482,18 +553,13 @@
 
     map.on("styledata", applyGeoJsonLayers);
 
-    // Ambil Data GeoJSON Lokal
+    // Ambil Data GeoJSON Baku dari subfolder assets/geojson/
     Promise.all([
-      fetch("../assets/banjarnegara_kecamatan.geojson")
-        .then(r => r.json())
-        .catch(() => fetch("../assets/peta_kecamatan.geojson").then(r => r.json())),
-      fetch("../assets/banjarnegara_desa.geojson")
-        .then(r => r.json())
-        .catch(() => fetch("../assets/peta_desa.geojson").then(r => r.json()))
+      fetch(CONFIG.paths.kecamatan).then(r => r.json()),
+      fetch(CONFIG.paths.desa).then(r => r.json())
     ]).then(([kecData, desaData]) => {
       kecGeoJson = kecData;
 
-      // Berikan warna variatif pada tiap desa berdasarkan kecamatannya
       const kecMap = {};
       let colorIndex = 0;
 
@@ -527,13 +593,14 @@
       if (map.isStyleLoaded()) {
         applyGeoJsonLayers();
       }
-    }).catch(err => console.error("Gagal memuat berkas GeoJSON:", err));
+    }).catch(err => console.error("Gagal memuat berkas GeoJSON baku:", err));
 
-    // Fungsi Ganti Basemap (Liberty, Positron, Satelit)
+    // Ganti Basemap (Liberty, Positron, Bright, Dark, Satelit)
     function setBasemap(styleKey) {
       if (activeStyleKey === styleKey) return;
-      document.querySelectorAll(".btn-group button").forEach(b => b.classList.remove("active"));
-      document.getElementById("btn-" + styleKey).classList.add("active");
+      document.querySelectorAll(".btn-layer").forEach(b => b.classList.remove("active"));
+      const btn = document.getElementById("btn-" + styleKey);
+      if (btn) btn.classList.add("active");
       activeStyleKey = styleKey;
       map.setStyle(CONFIG.styles[styleKey]);
     }
@@ -548,7 +615,6 @@
         return;
       }
 
-      // Cari bounding box kecamatan terpilih
       if (kecGeoJson && kecGeoJson.features) {
         const feat = kecGeoJson.features.find(f => {
           const val = (f.properties.Kecamatan || f.properties.Name || "").toLowerCase();
@@ -556,21 +622,7 @@
         });
 
         if (feat && feat.geometry) {
-          let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-          function scan(c) {
-            if (typeof c[0] === "number") {
-              if (c[0] < minX) minX = c[0];
-              if (c[0] > maxX) maxX = c[0];
-              if (c[1] < minY) minY = c[1];
-              if (c[1] > maxY) maxY = c[1];
-            } else {
-              c.forEach(scan);
-            }
-          }
-          scan(feat.geometry.coordinates);
-          if (minX !== Infinity) {
-            map.fitBounds([[minX, minY], [maxX, maxY]], { padding: 40, duration: 900 });
-          }
+          fitFeatureBounds(feat.geometry.coordinates);
         }
       }
     }
@@ -581,7 +633,6 @@
         map.setFilter("layer-desa-fill", null);
         map.setFilter("layer-desa-line", null);
       } else {
-        // Normalisasi format nama kecamatan (misal 'Kec.Susukan' atau 'susukan')
         const filterExpr = [
           "any",
           ["==", ["downcase", ["get", "Kecamatan"]], kecValue.toLowerCase()],
@@ -594,6 +645,92 @@
       }
     }
 
+    // Autocomplete Search Desa & Kecamatan
+    function onSearchInput(val) {
+      const resultsEl = document.getElementById("search-results");
+      if (!val || !val.trim() || !desaGeoJson) {
+        resultsEl.style.display = "none";
+        resultsEl.innerHTML = "";
+        return;
+      }
+
+      const matches = CONFIG.searchFeatures(val, desaGeoJson.features, 7);
+      if (!matches.length) {
+        resultsEl.innerHTML = '<div class="search-item" style="cursor:default;color:#94a3b8;">Desa tidak ditemukan</div>';
+        resultsEl.style.display = "block";
+        return;
+      }
+
+      resultsEl.innerHTML = matches.map((f, i) => {
+        const p = f.properties || {};
+        const nama = p.Nama_Desa_ || p.Name;
+        const kec = p.Kecamatan || "";
+        return `
+          <div class="search-item" onclick="selectSearchedFeature(${i})">
+            <div>${nama}</div>
+            <div class="search-item-sub">${kec} &bull; Banjarnegara</div>
+          </div>
+        `;
+      }).join("");
+      resultsEl.style.display = "block";
+      window._currentSearchMatches = matches;
+    }
+
+    function selectSearchedFeature(index) {
+      const feat = window._currentSearchMatches?.[index];
+      if (!feat || !feat.geometry) return;
+
+      document.getElementById("search-results").style.display = "none";
+      document.getElementById("search-input").value = feat.properties.Nama_Desa_ || feat.properties.Name;
+
+      fitFeatureBounds(feat.geometry.coordinates);
+
+      // Tampilkan popup
+      const center = calculateFeatureCenter(feat.geometry.coordinates);
+      if (center) {
+        popup.setLngLat(center)
+          .setHTML(`
+            <div class="popup-title">${feat.properties.Nama_Desa_}</div>
+            <div class="popup-meta">Kecamatan: <strong>${feat.properties.Kecamatan}</strong></div>
+            <span class="popup-badge">ID: ${feat.properties.OBJECTID}</span>
+          `)
+          .addTo(map);
+      }
+    }
+
+    function fitFeatureBounds(coordinates) {
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      function scan(c) {
+        if (typeof c[0] === "number") {
+          if (c[0] < minX) minX = c[0];
+          if (c[0] > maxX) maxX = c[0];
+          if (c[1] < minY) minY = c[1];
+          if (c[1] > maxY) maxY = c[1];
+        } else {
+          c.forEach(scan);
+        }
+      }
+      scan(coordinates);
+      if (minX !== Infinity) {
+        map.fitBounds([[minX, minY], [maxX, maxY]], { padding: 50, duration: 900 });
+      }
+    }
+
+    function calculateFeatureCenter(coordinates) {
+      let sumX = 0, sumY = 0, count = 0;
+      function scan(c) {
+        if (typeof c[0] === "number") {
+          sumX += c[0];
+          sumY += c[1];
+          count++;
+        } else {
+          c.forEach(scan);
+        }
+      }
+      scan(coordinates);
+      return count > 0 ? [sumX / count, sumY / count] : null;
+    }
+
     // Toggle Visibilitas Layer
     function toggleLayerVisibility(layerId, isVisible) {
       if (map.getLayer(layerId)) {
@@ -601,12 +738,32 @@
       }
     }
 
+    // Toggle Kemiringan Perspektif 3D
+    function togglePerspectivePitch() {
+      isPitched = !isPitched;
+      const btn = document.getElementById("btn-toggle-pitch");
+      if (isPitched) {
+        map.easeTo({ pitch: 60, bearing: -15, duration: 900 });
+        btn.textContent = "Datar 2D (0°)";
+        btn.style.borderColor = "#38bdf8";
+        btn.style.color = "#38bdf8";
+      } else {
+        map.easeTo({ pitch: 0, bearing: 0, duration: 900 });
+        btn.textContent = "Tilt 3D (60°)";
+        btn.style.borderColor = "#334155";
+        btn.style.color = "#e2e8f0";
+      }
+    }
+
     // Reset View Bounds ke Seluruh Banjarnegara
     function resetBanjarnegaraBounds() {
       map.fitBounds(CONFIG.bounds, { padding: 25, duration: 800 });
       document.getElementById("select-kecamatan").value = "";
+      document.getElementById("search-input").value = "";
+      document.getElementById("search-results").style.display = "none";
       selectedKecamatan = "";
       applyFilter("");
+      popup.remove();
     }
   </script>
 </body>

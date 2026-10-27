@@ -36,14 +36,14 @@ GeoLibre/ (maplibre-starter-kit)
 │   ├── maplibre-gl.mjs              # ES Module library utama MapLibre GL JS (v6.16+)
 │   ├── maplibre-gl-worker.mjs       # Dedicated Web Worker (Wajib untuk decode Vector Tile & GeoJSON)
 │   ├── maplibre-gl.css              # Stylesheet UI & kontrol peta
-│   ├── map-config.js                # Modul konfigurasi standar peta 2D & bounding box Banjarnegara
-│   ├── banjarnegara_kecamatan.geojson # Data spasial 20 Kecamatan lengkap Kabupaten Banjarnegara (817 KB)
-│   ├── banjarnegara_desa.geojson    # Data spasial 278 Desa/Kelurahan lengkap Banjarnegara (2.63 MB)
-│   ├── peta_kecamatan.geojson       # Alias compatibilitas batas kecamatan
-│   └── peta_desa.geojson            # Alias compatibilitas batas desa
+│   ├── map-config.js                # Modul konfigurasi standar peta 2D (5 Basemap, search, bounds)
+│   └── geojson/                     # 📂 Direktori Baku Data Spasial (Single Source of Truth)
+│       ├── banjarnegara-kecamatan.geojson # Batas 20 Kecamatan Kabupaten Banjarnegara (817 KB)
+│       ├── banjarnegara-desa.geojson      # Batas 278 Desa/Kelurahan Kabupaten Banjarnegara (2.63 MB)
+│       └── metadata.json                  # SSOT metadata spasial, checksum, skema atribut & BBox
 │
 ├── examples/                        # 🚀 Demo HTML Standalone (Bisa langsung dibuka di browser)
-│   ├── 01-vanilla-2d.html           # Peta 2D Banjarnegara lengkap (Liberty, Positron, Satelit, filter kecamatan)
+│   ├── 01-vanilla-2d.html           # Peta 2D Banjarnegara lengkap (5 Basemap, Autocomplete Search, 3D Tilt)
 │   ├── 02-vanilla-3d-terrain.html   # Peta 3D dengan elevasi gunung nyata (DEM) & rotasi kamera
 │   └── 03-vanilla-3d-buildings.html # Peta 3D perkotaan dengan ekstrusi bangunan (fill-extrusion)
 │
