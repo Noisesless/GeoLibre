@@ -45,7 +45,7 @@
       "Sigaluh", "Susukan", "Wanadadi", "Wanayasa"
     ],
 
-    // Provider Layer Basemap Gratis & Legal (Tanpa API Key)
+    // Provider Layer Basemap Gratis & Legal (Tanpa API Key, Bebas 403)
     styles: {
       liberty: "https://tiles.openfreemap.org/styles/liberty",
       positron: "https://tiles.openfreemap.org/styles/positron",

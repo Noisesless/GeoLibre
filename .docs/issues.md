@@ -2,6 +2,16 @@
 
 ## 🟢 Riwayat Isu Terselesaikan (Resolved History — FIFO Max 10)
 
+### [ISSUE-003] Peta Vektor Blank di Server Nginx Akibat MIME Type .mjs (Strict MIME nosniff)
+- **Status:** `RESOLVED`
+- **Tanggal:** 2026-10-30
+- **Komponen:** `assets/maplibre-gl-worker.js`, `templates/Map2DComponent.tsx`
+- **Akar Masalah:** Di server web Nginx default, ekstensi `.mjs` dilayani dengan header `Content-Type: application/octet-stream` disertai `X-Content-Type-Options: nosniff`. Browser modern memblokir eksekusi Web Worker dengan MIME non-executable, sehingga MapLibre tidak dapat men-decode vector tiles PBF dan peta hanya menampilkan kanvas kosong (#f8f4f0).
+- **Tindakan Perbaikan:** Menyediakan berkas worker berekstensi `.js` (`maplibre-gl-worker.js`) yang dijamin dilayani Nginx dengan `Content-Type: application/javascript`, serta mengarahkan default worker ke `/maplibre-gl-worker.js`.
+- **Verifikasi:** MapLibre Web Worker aktif secara instan pada server Nginx tanpa memerlukan modifikasi sudo / vhost config, dan tile vektor OpenFreeMap ter-render sempurna.
+
+---
+
 ### [ISSUE-002] Batas Spasial Hilang Saat Ganti Basemap (2D) & Belum Ada di Gedung 3D
 - **Status:** `RESOLVED`
 - **Tanggal:** 2026-10-27
